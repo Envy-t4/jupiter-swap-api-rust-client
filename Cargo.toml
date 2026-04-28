@@ -8,5 +8,5 @@ members = [
 edition = "2021"
 
 [workspace.dependencies]
-solana-sdk = "=2.1"
-solana-client = "=2.1"
+solana-sdk = "2"
+solana-client = "2"
