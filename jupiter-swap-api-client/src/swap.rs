@@ -1,11 +1,13 @@
 use crate::{
-    quote::QuoteResponse, serde_helpers::field_as_string, transaction_config::TransactionConfig,
+    quote::QuoteResponse,
+    serde_helpers::{
+        field_as_string,
+        instruction::{InstructionInternal, PubkeyInternal},
+    },
+    transaction_config::TransactionConfig,
 };
 use serde::{Deserialize, Serialize};
-use solana_sdk::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-};
+use solana_sdk::{instruction::Instruction, pubkey::Pubkey};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,8 +28,7 @@ pub struct SwapResponse {
 }
 
 mod base64_deserialize {
-    use super::*;
-    use serde::{de, Deserializer};
+    use serde::{de, Deserialize, Deserializer};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
     where
@@ -61,49 +62,6 @@ pub struct SwapInstructionsResponseInternal {
     swap_instruction: InstructionInternal,
     cleanup_instruction: Option<InstructionInternal>,
     address_lookup_table_addresses: Vec<PubkeyInternal>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct InstructionInternal {
-    #[serde(with = "field_as_string")]
-    pub program_id: Pubkey,
-    pub accounts: Vec<AccountMetaInternal>,
-    #[serde(with = "base64_deserialize")]
-    pub data: Vec<u8>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct AccountMetaInternal {
-    #[serde(with = "field_as_string")]
-    pub pubkey: Pubkey,
-    pub is_signer: bool,
-    pub is_writable: bool,
-}
-
-impl Into<AccountMeta> for AccountMetaInternal {
-    fn into(self) -> AccountMeta {
-        AccountMeta {
-            pubkey: self.pubkey,
-            is_signer: self.is_signer,
-            is_writable: self.is_writable,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct PubkeyInternal(#[serde(with = "field_as_string")] Pubkey);
-
-impl Into<Instruction> for InstructionInternal {
-    fn into(self) -> Instruction {
-        Instruction {
-            program_id: self.program_id,
-            accounts: self.accounts.into_iter().map(Into::into).collect(),
-            data: self.data,
-        }
-    }
 }
 
 impl From<SwapInstructionsResponseInternal> for SwapInstructionsResponse {

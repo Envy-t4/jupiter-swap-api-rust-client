@@ -4,12 +4,15 @@ use reqwest::{Client, Response};
 use serde::de::DeserializeOwned;
 use swap::{SwapInstructionsResponse, SwapInstructionsResponseInternal, SwapRequest, SwapResponse};
 use std::time::Duration;
+use v2::build::{BuildRequest, BuildResponse};
+use v2::order::{OrderRequest, OrderResponse};
 
 pub mod quote;
-mod route_plan_with_metadata;
+pub mod route_plan_with_metadata;
 mod serde_helpers;
 pub mod swap;
 pub mod transaction_config;
+pub mod v2;
 
 #[derive(Clone)]
 pub struct JupiterSwapApiClient {
@@ -133,5 +136,32 @@ impl JupiterSwapApiClient {
         check_status_code_and_deserialize::<SwapInstructionsResponseInternal>(response)
             .await
             .map(Into::into)
+    }
+
+    /// `GET /order` (Jupiter Swap API v2).
+    ///
+    /// `base_path` must already include the v2 prefix (e.g.
+    /// `https://lite-api.jup.ag/swap/v2`).
+    pub async fn order(&self, request: &OrderRequest) -> Result<OrderResponse> {
+        let query = serde_qs::to_string(request)?;
+        let response = self
+            .client
+            .get(format!("{}/order?{query}", self.base_path))
+            .send()
+            .await?;
+        check_status_code_and_deserialize(response).await
+    }
+
+    /// `GET /build` (Jupiter Swap API v2, Metis-only). Returns raw swap
+    /// instructions; use [`v2::build::assemble_transaction`] to compose a
+    /// `VersionedTransaction`.
+    pub async fn build(&self, request: &BuildRequest) -> Result<BuildResponse> {
+        let query = serde_qs::to_string(request)?;
+        let response = self
+            .client
+            .get(format!("{}/build?{query}", self.base_path))
+            .send()
+            .await?;
+        check_status_code_and_deserialize(response).await
     }
 }
