@@ -90,7 +90,8 @@ pub enum SwapModeV2 {
 #[serde(rename_all = "camelCase")]
 pub struct RoutePlanStepV2 {
     pub swap_info: SwapInfoV2,
-    pub percent: u8,
+    #[serde(default)]
+    pub percent: Option<u8>,
     #[serde(default)]
     pub bps: u16,
     #[serde(default)]
