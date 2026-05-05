@@ -4,7 +4,7 @@
 use std::str::FromStr;
 
 use crate::route_plan_with_metadata::RoutePlanWithMetadata;
-use crate::serde_helpers::{field_as_string, vec_as_comma_separated};
+use crate::serde_helpers::{field_as_string, option_field_as_string, vec_as_comma_separated};
 use anyhow::{anyhow, Error};
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
@@ -26,10 +26,14 @@ pub struct SwapInfo {
     /// An estimation of the output amount into the AMM
     #[serde(with = "field_as_string")]
     pub out_amount: u64,
-    #[serde(with = "field_as_string")]
-    pub fee_amount: u64,
-    #[serde(with = "field_as_string")]
-    pub fee_mint: Pubkey,
+    /// Deprecated: This field is no longer returned by Jupiter API (or returns 0)
+    /// The fee is already factored into out_amount
+    #[serde(default, with = "option_field_as_string")]
+    pub fee_amount: Option<u64>,
+    /// Deprecated: This field is no longer returned by Jupiter API (or returns input mint)
+    /// The fee is already factored into out_amount
+    #[serde(default, with = "option_field_as_string")]
+    pub fee_mint: Option<Pubkey>,
 }
 
 #[derive(Serialize, Deserialize, Default, PartialEq, Clone, Debug)]
